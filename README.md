@@ -1,57 +1,140 @@
 # Smart File Protector (Windows)
 
-## Overview
-**Smart File Protector** is a Tkinter-based Windows desktop application that:
-- Detects **removable USB drives**.
-- Lets you **add protected files/folders** to a local list.
-- Provides **“Protect Now”** to **hide** the selected items (and recursively hide folders’ contents).
-- Provides **“Restore Files”** to **unhide** protected items.
-- Requires **password authentication** for restore (and at startup).
-- Logs activity in an on-screen “Activity Log”.
+A Windows-only **Tkinter desktop** app that helps you “protect” selected files/folders by **hiding** them using Windows file attributes (Hidden + System). It also includes:
+- **USB removable-drive monitoring** (detect insert/remove events)
+- **Password authentication** (startup + restore action)
+- A **configurable list** of protected paths saved locally
+- A live **activity log** in the UI
 
-> Note: “Hiding” here uses Windows file attributes (Hidden/System). It does **not** encrypt data.
+> **Important:** This does **not** encrypt your data. “Protecting” = changing Windows attributes so items become hidden.
 
-## Files
-- `projectfyp2.py` — the main application.
-- `protected_list.json` — saved list of protected paths (created automatically).
+---
 
-## Requirements
-- Windows OS
-- Python 3.x
+## What the app does
+### 1) Startup authentication
+When you run the program, it immediately asks for the application password.
+- After **3 failed attempts**, it blocks access.
+- If authentication succeeds, the main UI opens.
 
-Python packages used (standard library only):
-- `tkinter`, `ctypes`, `hashlib`, `json`, etc. (No extra pip dependencies.)
+### 2) USB monitoring (optional)
+In the UI you can press **▶ Start Monitoring**.
+- The app checks removable drives every ~1.5 seconds.
+- It compares the current set of drives with the last known set to detect:
+  - **Inserted** drives
+  - **Removed** drives
+- The UI updates a “USB Status” card and logs events.
 
-## Passwords
-- The application uses a hardcoded password hash.
-- Current password in code: **`1234`** (hashed internally).
+### 3) Manage protected items
+You maintain a list of items to protect:
+- **Add File** → choose a file
+- **Add Folder** → choose a folder
+- **Remove Selected** → remove selected rows from the list
 
-## How it works (high level)
-1. On launch, the app shows a startup password prompt (max 3 attempts).
-2. After authentication, the UI loads and the app begins tracking USB drive changes when you press **Start Monitoring**.
-3. You can add:
-   - **Add File** (select a file)
-   - **Add Folder** (select a folder)
-4. When you press **Protect Now**, it:
-   - Iterates through the configured protected paths
-   - Uses Windows attributes to set **Hidden/System**
-5. When you press **Restore Files**, it prompts for password again and then unhides items.
+Each protected item is stored as an **absolute path**.
 
-## Run the app
-From a terminal:
+### 4) Protect Now
+When you press **🛡 Protect Now** the app:
+- Iterates over every configured protected path
+- If it’s a file → calls Windows API to set Hidden/System attributes
+- If it’s a folder → recursively walks the directory and hides:
+  - the folder itself
+  - all subfolders
+  - all files
+- It logs how many items were updated and skips paths that no longer exist.
+
+### 5) Restore Files
+When you press **🔓 Restore Files** the app:
+- Prompts for password again
+- If password is valid, it performs the reverse operation:
+  - folders are recursively unhiden
+  - files are unhidden
+- It then updates the UI back to an “IDLE” protection state.
+
+---
+
+## Files used by the project
+### `projectfyp2.py`
+Main application code.
+Key features implemented here:
+- Windows API integration (via `ctypes`) to set/unset Hidden/System attributes
+- Tkinter UI (cards, buttons, tree table, and log)
+- USB detection loop in a background thread
+- Password hashing + verification
+- Local persistence of protected paths
+
+### `protected_list.json`
+A JSON file created/updated by the app to store the protected path list.
+- Location: in the **same working directory** where the app runs
+- Format: a JSON list of strings (paths)
+
+> If you run the script from a different folder, the JSON file will also be created in that folder.
+
+---
+
+## Passwords (as in the current code)
+The password in `projectfyp2.py` is hardcoded as a SHA-256 hash.
+- Current plain-text password embedded in code: **`1234`**
+
+The app never stores the plain-text password; it stores/verifies against the hash.
+
+---
+
+## Requirements / dependencies
+- **Windows 10/11**
+- **Python 3.x**
+- Uses **standard library** only:
+  - `tkinter` for UI
+  - `ctypes` for Windows attribute changes
+  - `hashlib`, `json`, `threading`, `os`, etc.
+
+No pip install is required.
+
+---
+
+## How to run
+From the folder where `projectfyp2.py` is located:
 ```bat
 python projectfyp2.py
 ```
 
-## Testing
-There is a `test_functionsfyp.py` open in your editor, but it appears to reference functions that are not present in `projectfyp2.py` as currently shown (name mismatches like `hide_path_windows`, `load_protected_list`, etc.).
+The UI will open after startup authentication.
 
-If you want, tests can be updated to call the equivalent functions in `projectfyp2.py`.
+---
 
-## Troubleshooting
-- **Hiding may fail** for paths without permission (run as an appropriate user).
-- If you select a path that no longer exists, the app will **skip it** and log “Skipped not found”.
+## How to use (step-by-step)
+1. Run the script
+2. Enter the startup password
+3. (Optional) Click **▶ Start Monitoring**
+4. Click **📄 Add File** or **📁 Add Folder** to choose items
+5. Click **🛡 Protect Now** to hide them
+6. To undo, click **🔓 Restore Files** and enter the password
 
-## Security warning
-This project is a demonstration of Windows attribute-based hiding plus UI/password gating. For real security (confidentiality, tamper resistance), you would need proper encryption, access control, and threat modeling.
+---
+
+## Notes about behavior & limitations
+- **Permission issues:** If Windows denies attribute changes for some paths, the app will log failures.
+- **Nonexistent paths:** If a protected path no longer exists, it will be skipped.
+- **“Hidden” is not security:** Hidden files can still be recovered by anyone with enough access/tools.
+- **Hardcoded password:** For a real project, you would typically externalize credentials and add better security.
+
+---
+
+## Testing note (`test_functionsfyp.py`)
+Your repository also contains `test_functionsfyp.py`, but from what is currently visible:
+- It references functions like `hide_path_windows`, `load_protected_list`, `save_protected_list`.
+- These names don’t directly match the functions implemented in `projectfyp2.py` (for example `set_hidden`, `hide_recursively`, `load_protected_items`, `save_protected_items`).
+
+So the tests may currently fail until the test file is updated to call the correct functions.
+
+---
+
+## How to update tests (high level)
+If you want to align tests with the app code, you would typically:
+- Map test helper names → the actual functions in `projectfyp2.py`
+- Ensure the test expects the correct JSON format (`protected_list.json`) and keys
+
+---
+
+## Quick project description (for your report)
+**Smart File Protector** is a user-facing Windows application that monitors USB drive insertion/removal and provides a password-protected workflow to hide/unhide user-selected files and folders by manipulating Windows file attributes. It keeps a persistent list of protected items in JSON and provides real-time logging through a custom Tkinter GUI.
 

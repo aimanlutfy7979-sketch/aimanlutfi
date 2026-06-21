@@ -17,7 +17,7 @@ When you run the program, it immediately asks for the application password.
 - If authentication succeeds, the main UI opens.
 
 ### 2) USB monitoring (optional)
-In the UI you can press **▶ Start Monitoring**.
+In the UI you can press ** Start Monitoring**.
 - The app checks removable drives every ~1.5 seconds.
 - It compares the current set of drives with the last known set to detect:
   - **Inserted** drives
@@ -33,7 +33,7 @@ You maintain a list of items to protect:
 Each protected item is stored as an **absolute path**.
 
 ### 4) Protect Now
-When you press **🛡 Protect Now** the app:
+When you press ** Protect Now** the app:
 - Iterates over every configured protected path
 - If it’s a file → calls Windows API to set Hidden/System attributes
 - If it’s a folder → recursively walks the directory and hides:
@@ -43,7 +43,7 @@ When you press **🛡 Protect Now** the app:
 - It logs how many items were updated and skips paths that no longer exist.
 
 ### 5) Restore Files
-When you press **🔓 Restore Files** the app:
+When you press ** Restore Files** the app:
 - Prompts for password again
 - If password is valid, it performs the reverse operation:
   - folders are recursively unhiden
@@ -71,7 +71,7 @@ A JSON file created/updated by the app to store the protected path list.
 
 ---
 
-## Passwords (as in the current code)
+## Passwords 
 The password in `projectfyp2.py` is hardcoded as a SHA-256 hash.
 - Current plain-text password embedded in code: **`1234`**
 
@@ -104,10 +104,10 @@ The UI will open after startup authentication.
 ## How to use (step-by-step)
 1. Run the script
 2. Enter the startup password
-3. (Optional) Click **▶ Start Monitoring**
-4. Click **📄 Add File** or **📁 Add Folder** to choose items
-5. Click **🛡 Protect Now** to hide them
-6. To undo, click **🔓 Restore Files** and enter the password
+3. (Optional) Click ** Start Monitoring**
+4. Click ** Add File** or ** Add Folder** to choose items
+5. Click ** Protect Now** to hide them
+6. To undo, click ** Restore Files** and enter the password
 
 ---
 
@@ -128,7 +128,7 @@ So the tests may currently fail until the test file is updated to call the corre
 
 ---
 
-## How to update tests (high level)
+## How to update tests 
 If you want to align tests with the app code, you would typically:
 - Map test helper names → the actual functions in `projectfyp2.py`
 - Ensure the test expects the correct JSON format (`protected_list.json`) and keys
